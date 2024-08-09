@@ -411,3 +411,50 @@
     *dest = pack_fp(d_sign, d_exponent, d_mantissa);
   }
   ```
+
+## Character Representation
+
+- **ASCII**
+  - divided into 4 groups of 32 characters
+  - first group: `$0` - `$1F`
+    - **control characters**
+  - second group: punctuations, special characters, numeric digits, etc
+    - `$20` - space
+  - third group: upper case letters
+  - fourth group: lower case letters
+- The uppercase symbol differs from its lowercase equivalent in exactly one bit position
+  - bit 5
+- To quickly convert an _alphabetic character_ between upper- and lower- case, invert bit 5
+- Bit 5 _and_ 6 determine the character's group
+  - convert any upper- or lower- case (or special) character to its corresponding control character by setting bits 5 and 6 to `0`
+
+```
+--------------------------------------
+Bit 6 | Bit 5 | Group
+--------------------------------------
+0     | 0     | Control characters
+--------------------------------------
+0     | 1     | Digits and punctuation
+--------------------------------------
+1     | 0     | Uppercase and special
+--------------------------------------
+1     | 1     | Lowercase and special
+```
+
+- **double-byte character sets** (DBCS)
+  - supports up to 1021 different characters
+  - 3 \* 256 + (256 - 3) = 1021
+- Unicode
+  - `U+0041` - letter `A`
+  - **Basic Multilingual Plane (BMP)** - `U+000000` - `U+00FFFF`
+  - **code point**
+  - **surrogates**
+- **grapheme cluster**
+  - a sequence of one or more Unicode code points that combine to form a single language element (a single character)
+- **zero-terminated strings** vs. **length-prefixed strings**
+- Types of strings
+  - **static**
+    - can be determined at compile time
+  - **pseudo-dynamic**
+  - **dynamic**
+-
