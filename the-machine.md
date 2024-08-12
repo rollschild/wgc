@@ -457,4 +457,157 @@ Bit 6 | Bit 5 | Group
     - can be determined at compile time
   - **pseudo-dynamic**
   - **dynamic**
--
+
+## Memory Organization and Access
+
+### Basic System Components
+
+- **von Neumann Architecture**
+  - CPU
+  - memory
+  - I/O
+- the **System Bus**
+  - most CPUs have 3 major buses
+    - **data**
+    - **address**
+    - **control**
+- Data bus
+  - 32-bit wide
+  - 64-bit wide
+  - even 128-bit
+  - processor size (8-, 16-, 32-, or 64- bit) - determined by whichever value is smaller:
+    - number of data lines on the process, or
+    - size of the largest general-purpose integer register
+- Address Bus
+  - determines which address (memory location or I/O device) needs to talk to CPU
+  - number of bits on the address bus => _max_ number of addressable memory and I/O locations
+  - newer CPUs contain specialized buses intended to talk to very specific **dynamic random-access memory** (**DRAM**) modules
+  - memory control unit directly built into the CPU
+  - max DRAM can be connected to a CPU is a function of the memory control unit in CPU
+    - rather than the size of external address bus
+  - some older laptops have 16MB/32MB max memory limitation though 64-bit CPUs
+- Control Bus
+  - an electric collection of signals that control how processor communicates with rest of the system
+  - read or write?
+  - e.g. system uses 2 lines on the control bus, **read** and **write**, to determine data flow direction (CPU -> memory or memory -> CPU)
+  - composition:
+    - **system clock** lines
+    - **interrupt** lines
+    - **status** lines
+    - **byte enable** lines
+      - on some CPUs that supports **byte-addressable memory**
+      - allow 16-, 32-, and 64- bit processors to deal with smaller chunks of data
+      - by communicating the size of the accompanying data
+    - a signal, on x86 CPUs, that helps distinguish between address spaces
+      - 80x86 arch (unlike many other processors) provides 2 _distinct_ address spaces
+        - memory
+        - I/O
+      - but only one physical address bus - shared between I/O and memory
+      - to decide which component the address is intended for
+      - when signals are active, I/O devices use address on the LO 16 bits of address bus
+      - when signals inactive, I/O devices ignore them & memory subsystem takes over
+
+### Physical Organization of Memory
+
+- CPU addresses a max `2^n` different memory locations, where
+  - `n` is number of bits on address bus
+  - although most x86 CPUs do not actually have max addressable amount of memory
+- 80x86 CPUs support **byte-addressable memory**
+- To assign `0` to memory location `125`:
+  - CPU places `0` on data bus
+  - CPU places `125` on address bus
+  - CPU asserts the write line on the control bus
+- To read value of location `125` in memory, the CPU:
+  - places `125` on address bus
+  - asserts read line on control bus
+  - reads resulting data from data bus
+- 16-bit data buses
+  - organize memory into **banks** - even & odd
+  - data bus lines D0 - D7 transfer the LO byte of the word - always even address
+  - data bus lines D8 - D15 transfer the HO byte of the word - always odd address
+  - word has 16 bytes
+  - the 16-bit 80x86 CPUs _always_ place _even_ addresses on the **address bus**
+  - accessing a word at an _odd_ address requires 2 memory operations
+  - _accessing words at odd addresses on a 16-bit processor is slower than accessing words at even addresses_
+- 32-bit data buses
+  - can access any single byte with one memory operation
+  - address placed on the **address bus** is _always_ multiples of 4
+- Proper data alignment:
+  - the LO byte of word values should _always_ be placed at even addresses
+  - LO byte of double-word values should always be placed at addresses evenly divisible by 4
+- 64-bit data buses
+  - CPUs with 64-bit data buses have special cache memory reducing impact of nonaligned data access
+
+### Big-Endian vs. Little-Endian
+
+- **little-endian**
+  - LO byte has the lowest address in memory
+  - USB
+  - x86 Unix
+- **big-endian**
+  - HO byte has the lowest address in memory
+  - TCP/IP
+- **mirror-image swap** - to convert little <-> big endian
+- **discriminant union**
+
+### System Clock
+
+- the **system clock**
+  - an electric signal on the **control bus** that alternates between `0` and `1` periodically
+    - the rate - **system clock frequency**
+      - several _billion_ cycles per second
+    - **clock period**/**clock cycle** - time it takes to switch `0` -> `1` or `1` -> `0`
+  - _all_ activity within the CPU is synchronized with the edges (rising/falling) of the clock signal
+  - the timing standard within the system
+  - system clock spends most of time at either `0` or `1`
+    - very little time switching between
+- **memory access** is synch'ed with system clock
+  - memory access occurs no more than once every clock cycle
+  - **memory access time** - number of clock cycles between a memory request (read/write) and when the memory operation completes
+- modern CPUs are _much faster than_ memory devices
+  - they often have a second clock, the **bus clock**
+  - some fraction of the CPU speed
+- typical 80x86 CPUs have a one-cycle memory access time
+- the CPU does _NOT_ wait for memory
+  - **access time** is specified by **bus clock frequency**
+- **wait states**
+  - an extra clock cycle that gives a device additional time to respond to CPU
+  - in reality, additional decoding/buffering logic between CPU and memory
+  - almost every CPU provides a pin (signal appearing on control bus) allowing you to insert wait states
+  - but because of **cache memory** - zero wait times most of the time could be achieved
+- **cache memory**
+  - a small amount of _very fast_ memory that sits between CPU and main memory
+  - bytes within a cache do _NOT_ have fixed addresses
+  - can dynamically reassign addresses
+- caching memory locations _while accessing them_ will _NOT_ speed up the program if constantly accessing consecutive locations never accessed before
+  - when a cache miss occurs, most caching systems will read several consecutive bytes of main memory (**cache line**)
+- **Two-level (L2) caching system**
+  - first level is on chip (8192-byte)
+  - L2 is between CPU and main memory
+  - L2 and L1 are in same packaging on newer CPUs
+  - generally does _NOT_ operate on zero wait states
+- **Three-level (L3) cache**
+  - can be quite large
+
+### CPU Memory Access
+
+- Three different ways:
+  - **direct**
+  - **indirect**
+  - **indexed**
+- RISC processors _rarely_ access memory as frequently as 80x86
+- **Direct Memory Addressing Mode**
+  - generally used for accessing global static variables
+  - encodes a variable's memory address as part of actual machine instruction
+- **Indirect Addressing Mode**
+  - uses a register to hold a memory address
+  - used for accessing objects referenced by a pointer variable
+- **Indexed Addressing Mode**
+  - the machine instructions encode both an **offset** (direct address) and a **register** in the bits
+  - at runtime, CPU computes the sum of these 2 address components to create an **effective address**
+  - great for accessing
+    - array elements
+    - structures
+    - records
+- **Scaled-Index Addressing Mode**
+  - uses 2 registers, plus an offset
