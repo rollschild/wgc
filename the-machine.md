@@ -611,3 +611,48 @@ Bit 6 | Bit 5 | Group
     - records
 - **Scaled-Index Addressing Mode**
   - uses 2 registers, plus an offset
+
+## Composite Data Types and Memory Objects
+
+### Pointer
+
+- an pointer is actually an abstraction of a memory address
+- some languages (e.g. LISP) implement pointers by using **double indirection**
+  - the pointer object contains the address of some memory variable whose value is the address of the object to be accessed
+- objects allocated on **heap** - **anonymous variables**
+  - referred to by address
+
+### Array
+
+- multi-dimensional array
+  - **row-major ordering**
+  - **column-major ordering**
+
+### Record/Structure
+
+- most compilers ensure the length of entire record is a multiple of 2, 4, 8, or 16 bytes
+  - append padding bytes to fill out the record's size
+
+### Class
+
+- **VMT** - **virtual method table**
+  - a pointer to an array of pointers to methods associated with the class
+  - when a program calls one of the virtual methods in the class:
+    - it fetches address of the VMT from the object in memory
+    - uses the pointer to fetch the specific method address
+    - then uses the fetched address to call the method directly
+- there is a single VMT associated with each class in a program
+  - even when classes inherit fields from some base class, their VMT (generally) differs from the base class's VMT
+
+#### Constructors
+
+- Before you can actually call any methods in a VMT, you have to make sure:
+  - the table is actually present in memory (holding addresses of the methods defined in class)
+  - to initialize the VMT pointer field in every class created
+- In C/C++, compiler automatically generates the VMTs when compiling the _class definitions_
+- Initialization of the VMT pointer field in the object itself is (usually) handled by **default constructor**
+
+#### Classes in C++
+
+- allow **multiple inheritance**
+-
