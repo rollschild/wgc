@@ -655,4 +655,31 @@ Bit 6 | Bit 5 | Group
 #### Classes in C++
 
 - allow **multiple inheritance**
--
+
+## Boolean Logic and Digital Design
+
+- `A'` - NOT `A`
+- `A • B` - A AND B
+- `A + B` - A OR B
+- the **canonical form** of _any_ boolean function:
+  - use a sum (logical OR) of minterms
+- **minterm** - a product containing exactly n literals, where n is number of input variables
+  - eg. minterms for 3 variables A, B, and C:
+    - A'B'C'
+    - AB'C'
+    - A'BC'
+    - ABC'
+    - A'B'C
+    - AB'C
+    - A'BC
+    - ABC
+- **NAND** gate
+  - NOT AND
+  - from transistor/hardware perspective, NAND gate is simpler to construct than AND gate
+- CPU is built from **combinational circuits**
+  - systems containing basic Boolean operations (AND, OR, NOT), some inputs, and a set of outputs
+  - each output represents a _different_ boolean function
+- Memory modules have **chip-select lines**
+  - with a two-input, four-output decoder
+  - specifying the HO 2 bits of the memory address
+  -
