@@ -682,4 +682,149 @@ Bit 6 | Bit 5 | Group
 - Memory modules have **chip-select lines**
   - with a two-input, four-output decoder
   - specifying the HO 2 bits of the memory address
-  -
+
+## CPU Architecture
+
+### Basic CPU design
+
+- the capability of **rewire**
+  - **patch board**
+- **stored program computer**
+  - **control unit (CU)**
+    - uses **instruction pointer** to hold address of an instruction's binary numeric code (a.k.a. **opcode**)
+    - fetches opcode from memory
+    - places opcode in the instruction decoding register - for execution
+    - then increments the instruction pointer
+- CPU uses 2 common approaches to execute the instruction fetched by **control unit**
+  - **random logic** (hardwired)
+  - **microcode** (emulation)
+- **microcode**
+  - contains a small, very fast **execution unit**, a.k.a. **microengine**
+    - which, uses the binary opcode to select a set of instructions from the microcode bank
+  - executes one microinstruction per clock cycle
+  - must fetch its instructions from the microcode ROM (read-only memory)
+    - performance bottleneck
+- **random logic**
+  - _not necessarily_ faster than microcode
+  - often includes a sequencer
+    - steps through several states (one state per clock cycle)
+- whether **microcode** or **random logic** is better depends on memory technology
+
+### Executing Instructions, Step by Step
+
+- `loop` - a **CISC (complex instruction set computer)** instruction
+  - subtracts `1` from `ECX`
+  - does a conditional jump if `ECX` does not contain `0`
+  ```asm
+  sub(1, ecx); // on x86 the sub instruction sets the zero flag
+  jnz SomeLabel;
+  ```
+- one clock cycle per operation (or stage) that CPU executes
+- A possible sequence:
+  1. Fetch the instruction's opcode from memory
+  2. Update EIP (**extended instruction pointer**) register with address of the byte following the opcode
+  3. Decode the instruction's opcode
+- `add`
+  - **ALU (arithmetic logical unit)**
+- the **flags register**, a.k.a. **condition-codes register** or **program-status word**
+  - an array of Boolean variables in CPU
+  - tracks whether the previous instruction produced
+    - an overflow, or
+    - a zero result, or
+    - a negative result, or
+    - other conditions
+
+### RISC vs CISC
+
+- **CISC** - **complex instruction set computer**
+- **RISC** - **reduced instruction set computer**
+
+### Parallelism
+
+- in reality, even if a RISC instruction is simplified, its actual execution still requires multiple steps
+- goal: execute _one_ instruction per clock cycle, on average
+  - via **parallelism**
+- CPU has only one data bus - it _cannot_ fetch an instruction's opcode while trying to store data to memory
+- **functional unit** - group of logic that performs a common operation
+  - a functional unit can do only one operation at a time
+- 32-bit data bus is able to fetch 4 bytes in a single bus cycle
+- **prefetch queue**
+  - hardware
+  - can generally hold between 8 and 32 bytes
+- **Bus Interface Unit (BIU)**
+  - controls access to address & data buses
+  - can fetch additional bytes from memory that holds machine instructions and store them in prefetch queue
+- CPU _cannot_ overlap the process of fetching and decoding opcode for the next instruction with the process of executing a jump instruction that transfers control
+  - avoid jumping around in the program as much as possible - if you want fast code
+- What factors can hurt performance of prefetch queue?
+  - jumps that actually transfer control
+  - instruction size
+    - instructions involving constants and memory operands tend to be the largest
+  - data bus width
+    - instructions that access memory compete with the prefetch queue for access to the bus
+- **pipelining**
+- **bus contention** - competition between instructions for access to the bus
+  - whenever an instruction needs to access an item in memory
+  - could be handled by **pipeline stall**
+    - CPU gives priority to instruction farthest along the pipeline
+- **instruction caches** - providing multiple paths to memory
+  - separate from data cache
+  - used for machine instructions
+- **Harvard Architecture**
+  - CPU has 2 separate memory spaces
+    - one for instructions
+    - one for data
+  - no contention for the bus
+  - BIU continues to fetch opcodes on the instruction bus while accessing memory on data/memory bus
+- Advanced CPUs use an _internal_ **Harvard Architecture** and an _external_ **von Neumann architecture**
+  - separate on-chip caches for data and instructions
+  - each path between section within CPU represents an _independent_ bus
+  - data can flow on _all_ paths concurrently
+- On-chip, L1 instruction caches are generally quite small - 4Kb to 64Kb
+  - shorter the instruction, the more will fit in the cache
+  - more instructions in the cache, the less often bus contention will occur
+- **Hazards** - 2 types
+  - **control hazards**
+    - when CPU branches to some new location in memory
+    - consequently has to flush (from the pipeline) the instructions that are in various stages of execution
+  - **data hazards**
+    - when 2 instructions attempt to access the same memory location out of sequence
+    - happens when the source operand of one instruction is a destination operand of a previous instruction
+    - e.g.
+      ```asm
+      mov(some_var, ebx);
+      mov([ebx], eax);
+      ```
+      - stall the pipeline to synch the 2 instructions
+      - 2 cycles delayed
+    - reduced by simply rearranging the instructions
+- CISC (80x86) processors handle **control hazards** _automatically_
+- **Superscalar Operation** - executing instructions in parallel
+  - _can_ execute more than one instruction per single clock cycle
+  - supported 80x86
+  - a single instruction is _NOT_ a single operation
+- **superscalar CPU** has several **execution units**
+  - _Use short instructions_
+- **out-of-order execution**
+  - CPU can execute instructions prior to the completion of instructions appearing previously in the code stream
+- **register renaming**
+  - gives CPU more registers than it actually has
+  - used to prevent hazards
+  - CPU could support an array of EAX registers
+    - `eax[0]`, `eax[1]`, etc
+    - not selectable for programmers though
+- **VLIW Architecture**
+  - **very long instruction words**
+  - CPU fetches a large block of bytes (41 bits)
+  - CPU can execute 3 or more instructions per clock cycle
+- **Parallel Processing**
+  - common CPUs use **single instruction, single data (SISD)** model
+    - executes one instruction at a time, operating on a single piece of data
+  - Two common parallel models:
+    - **single instruction, multiple data (SIMD)**
+    - **multiple instruction, multiple data (MIMD)**
+      - **multiprocessor system**
+- **Multiprocessing**
+  - **cache coherency problem**
+  - **hyperthreading**
+-
