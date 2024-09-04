@@ -827,4 +827,47 @@ Bit 6 | Bit 5 | Group
 - **Multiprocessing**
   - **cache coherency problem**
   - **hyperthreading**
+
+## Instruction Set Architecture
+
+### Basic Design Goals
+
+- `loop` & `enter` instructions on 80x86 see _very little_ usages in modern high-performance programs
+- In typical CPU, computer encodes instructions as numeric values (**opcodes**) and stores them in memory
+- instructions must each have a unique code
+- with an n-bit number, 2^n different possible opcodes
+- to encode m instructions, need at least log(m) bits
+- with a 7-bit opcode, there are 128 different instructions
+  - to decode each of 128 instructions, need a 7-to-128-line decoder
+  - expensive!
+- A single large decoder can often be replaced by several smaller, less expensive ones
+- CPU designers could encode instructions like `mov` with a **subopcode**
+  - then encode the instruction's operands using other bit fields
+  - e.g. `mov(eax, ebx)` & `mov(ecx, edx)`
+- Goal of instruction set design: **opcodes should be easy to decode**
+- CPU designer's goal: assign an appropriate number of bits to
+  - the opcode's instruction field, and
+  - to its operation fields
+- Whether CPUs capable of reading _bytes_ from memory?
+  - most RISC CPUs read memory _only_ in 32- or 64- bit chunks
+  - opcode will be same size as smallest object the CPU can read from memory at one time
+- operands?
+  - include all operands in opcode, or
+  - do _not_ count operands like immediate constants or address displacements as part of opcode
+- Variable-length instructions
+  - CPU must first decode the instruction's size (1-byte, 2-byte, etc)
+  - introduces delays in the decoding steps
+  - limits CPU's max clock speed (reducing CPU's clock frequency)
+- Choosing Instructions
+  - Do _not_ use up the opcodes as quickly as possible
+  - produce a consistent and complete instruction set give the design compromises
+- To encode the (groups of) instructions
+  - use some bits to select the group
+  - use some bits to select a particular instruction from that group
+  - use some bits to encode the operand types (registers, memory location, constants)
+
+### Encoding 80x86 Instructions
+
+![80x86 32-bit Instruction Set](./x86-32-instruction-set-arch.jpg)
+
 -
