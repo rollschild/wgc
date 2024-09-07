@@ -870,4 +870,202 @@ Bit 6 | Bit 5 | Group
 
 ![80x86 32-bit Instruction Set](./x86-32-instruction-set-arch.jpg)
 
--
+## Memory Architecture And Organization
+
+- As a memory device gets larger, it tends to be slower
+- Registers are the _fastest_
+- The **main memory** subsystem - compared to registers, L1 cache, L2 cache, etc
+  - typically DRAM
+  - SDRAM (synchronous DRAM)
+  - double data rate DRAM (DDRAM)
+  - DDR3
+  - DDR4
+- **NUMA** - **non-uniform memory access**
+  - slower access times
+  - in graphics cards
+  - in flash memory devices
+- Programs explicitly control access to registers, main memory, and those memory hierarchy subsystems _only_ at file storage level and below
+- modern DRAM main-memory subsystems are much slower than CPU
+- It's the **virtual memory** subsystem's responsibility to move often requested data from hard disk to main memory
+  - if even faster access needed, caching system will move data from main memory to cache
+
+```txt
+CPU <-> L1 cache <-> L2 <-> L3 <-> Main Memory <-> Virtual Memory
+```
+
+- The largest percentage of memory accesses takes place in L1 cache subsystem
+- L2 cache can be as much as _one order of magnitude_ slower than L1 cache
+
+### Cache Architecture
+
+- cache memory is _not_ organized in a single group of bytes
+  - organized in blocks of **cache lines**
+  - each line contains (16/32/64/etc) bytes
+  - each line can have different _noncontiguous_ addresses
+
+#### Direct-Mapped Cache
+
+- a.k.a. **one-way associative cache**
+- particular block of main memory is _always_ loaded into (mapped to) the exact same cache line
+  - determined by small number of bits in data block's memory address
+- _inefficient_
+- BUT very effective for data accessed _sequentially_ rather than _randomly_
+- instruction bytes (executed by CPU) can be stored effectively in a direct-mapped cache
+
+#### n-Way Set Associative Cache
+
+- cache broken up into sets of `n` cache lines
+- twoway- or four-way set associative cache
+  - by programs
+- many CPU designers use separate caches for data & machine instruction bytes
+  - e.g. 8kb data cache & 8kb instruction cache
+
+#### Cache-Line Replacement Policies
+
+- LRU
+- FIFO
+- random
+
+#### Cache Write Policies
+
+- _ANY_ data written to cache must ultimately be written to main memory as well
+- Two common write policies:
+  - **write-through**
+  - **write-back**
+- **write-through**
+  - better policy when two different CPUs are communicating through shared memory
+- **write-back**
+  - higher performance
+  - **dirty bit**
+
+#### How to use cache
+
+- Exhibit either spatial or temporal locality of reference
+  - place often used variables adjacent in memory so they _tend to_ fall into the same cache lines
+  - avoid data structures & access patterns that force cache to frequently replace cache lines
+- **thrashing**
+
+### NUMA and Peripheral Devices
+
+- typical video card interfaces with CPU through **peripheral component interconnect express (PCI-e)** bus
+
+### Virtual Memory, Memory Protection, Paging
+
+- virtual memory on 80x86 CPUs gives each process its own 32-bit address space
+- **paging**
+  - provides mechanism whereby OS can move infrequently used pages to secondary storage
+- **translation lookaside buffer (TLB)**
+  - to prevent cluttering data/instruction cache with page-table entries
+  - page table's own cache
+  - typically 64 - 512 entries on modern Intel
+
+### How to write software what is cognizant of memory hierarchy
+
+- **Declare together all variables you use within a common code sequence**
+  - storage will be allocated in physically adjacent memory locations
+- **Use local (automatic) variables**
+  - local storage allocated on stack
+  - system references stack frequently
+  - variables on stack tend to be in cache
+- **Declare scalar variables together - separately from array/record variables**
+  - access to any of several adjacent scalar variables generally forces system to load _all_ adjacent objects into cache
+
+### Runtime Memory Organization
+
+- different types of data in different sections/segments of main memory
+
+```
+               ________________________________________
+High addresses | Storage (uninitialized) variables    |
+               ----------------------------------------
+               | Static variables                     |
+               ----------------------------------------
+               | Read-only data                       |
+               ----------------------------------------
+               | Constants (not user accessible)      |
+               ----------------------------------------
+               | Code (program instructions)          |
+               ----------------------------------------
+               | Heap                                 |
+               ----------------------------------------
+               | Stack                                |
+               ----------------------------------------
+       Adrs $0 | Reserved by OS (typically 128KB)     |
+               ----------------------------------------
+```
+
+- OS reserves the lowest memory address
+  - help detect `NULL` pointer references
+  - **general protection fault**
+- **binding** - process of associating an attribute with an object
+- **scope**
+  - qualified as static attribute in compiled languages
+- **dynamic** - objects assigned with some attribute during program execution
+
+#### Code, Read-Only, and Constant Sections
+
+- the **code** section - program's machine instructions
+- the **constant** section - compiler-generated read-only data
+- the **read-only** data section - user-defined but read-only data
+
+#### Static variables section
+
+- **static** objects
+  - attribute bound to them _prior to_ the application's execution
+    - during compilation/linking
+  - constants
+  - global (program-level) variables
+- **static** section - user-defined, initialized, static variables
+- **static** variables
+  - compiler places the initial values in the executable file
+  - when app is executed, OS loads this portion of executable file (containing static variables) into memory
+
+#### Storage Variables Section
+
+- **storage** (a.k.a. BSS) - user-defined, _uninitialized_ variables
+- compilers put static objects that do _not_ have explicit values associated with them
+  - simply telling OS how many bytes to set aside for that section
+- This section in the executable file does _NOT_ actually contain any data
+- programs that declare uninitialized static objects (especially _large arrays_) in a BSS section will consume _less_ disk space
+
+#### Stack
+
+- **activation record**
+  - a special data structure
+  - created by system when a subroutine first begins execution
+  - deallocated when subroutine returns to its caller
+- implemented by using a register **stack pointer**
+- some CPUs do _not_ provide explicit stack pointer
+- if stack pointer provided - **hardware stack**
+  - 80x86
+  - data on stack can be manipulated by fewer instructions
+- if not, **software-implemented stack**
+  - MIPS Rx000 CPU
+
+#### Heap & Dynamic Memory Allocation
+
+- **heap** - dynamic variables
+- _NEVER_ part of the executable file
+
+##### Garbage Collection
+
+- overhead required
+- **first-fit search** vs. **best-fit search**
+- when heap manager satisfies a memory allocation request, it usually creates _two_ blocks of memory
+  - one in use
+  - one remaining
+
+##### OS & Memory Allocation
+
+- OS API calls are often very slow
+  - because they generally involve switching between kernel mode and user mode on CPU
+
+##### Heap Memory Overhead
+
+- Two types of overhead
+  - performance (speed)
+  - memory (space)
+- heap manager will allocate bytes of storage so that the complete allocation is an _even_ multiple of the granularity value
+- **Application should never assume it has more memory available than it requests**
+- a typical memory request may require between 4 and 16 bytes, plus what application requests
+- the larger the application request, the less impact the control information & **internal fragmentation** will have on heap
