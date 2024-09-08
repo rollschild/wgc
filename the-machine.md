@@ -1069,3 +1069,79 @@ High addresses | Storage (uninitialized) variables    |
 - **Application should never assume it has more memory available than it requests**
 - a typical memory request may require between 4 and 16 bytes, plus what application requests
 - the larger the application request, the less impact the control information & **internal fragmentation** will have on heap
+
+## Input and Output
+
+- to send data to output device, CPU moves data to a special memory location
+- to read data from in input device, CPU retrieves data from the device's address
+- I/O ports:
+  - read-only
+  - write-only
+  - read/write
+  - dual I/O
+  - bidirectional
+- an output port typically uses a **latch device** to hold data to be sent to outside world
+  - can be write-only or read/write
+- true inputs ports read data from external pins
+
+### I/O Mechanisms
+
+- Three basic I/O mechanisms:
+  - memory-mapped input/output
+  - I/O-mapped input/output
+  - direct memory access (DMA)
+
+#### Memory-Mapped I/O
+
+- memory-mapped peripheral device connected to CPU's address & data lines exactly like regular memory
+- CPU can use _any_ instruction that access memory (such as `mov`)
+- CPU _cannot_ cache values intended for memory-mapped I/O ports
+  - 80x86 page table entries contain a flag
+  - CPU uses this flag to determine whether it's ok to map data from a page in memory to cache
+
+#### I/O-mapped Input/Output
+
+- uses special I/O address space _separate_ from normal memory space
+  - coupled with special machine instructions to access device addresses
+- use same physical address bus to transfer _both_ memory addresses & I/O device addresses
+
+#### Direct Memory Access
+
+- devices have interface to the CPU's bus so they can read/write memory directly
+  - _without_ CPU as intermediary
+- allows I/O operations to proceed _in parallel_ with other CPU operations
+- **DMA controller**
+  - a pair of counters:
+    - **address register**
+    - **transfer counter**
+
+### System Buses and Data Transfer Rates
+
+- A single computer system often employs multiple buses
+- **ISA (Industry Standard Architecture)**
+- **PCI (Peripheral Component Interconnect)**
+
+#### Performance of PCI Bus
+
+- **burst mode**
+- PCI-e
+  - serial bus
+  - transmits data serially over a few data lines
+
+#### The AGP Bus
+
+- for graphics cards
+- **Accelerated Graphics Port**
+- talks to CPU local bus
+- only one AGP port per system
+- nowadays modern graphics cards use multiple PCI-e bus interfaces
+
+### Handshaking
+
+- send/receive status bits on a port separate from data port
+
+#### Interrupts & Polled I/O
+
+- Typical I/O devices generate an interrupt whenever they make data available to CPU, or when they become able to accept data from CPU
+- **interrupt service routine (ISR)**
+-
