@@ -1144,4 +1144,19 @@ High addresses | Storage (uninitialized) variables    |
 
 - Typical I/O devices generate an interrupt whenever they make data available to CPU, or when they become able to accept data from CPU
 - **interrupt service routine (ISR)**
+
+## Computer Peripheral Buses
+
+- **Small Computer System Interface (SCSI)**
+  - a true **peer-to-peer** bus
+  - used in highest-performing RAID systems (SAS drives)
+  - **SAS** - serial-attached SCSI
+- **IDE**/**ATA**
+  - **IDE** - integrated drive electronics
+  - **ATA**
+    - **Advanced Technology Attachment with Packet Interface (ATAPI)**
+  - **Serial AT Attachment (SATA)**
+- **Universal Serial Bus (USB)**
+  - the **host controller stack** _multiplexes_ the data on USB
+    - giving each peripheral a time slice of the bus
 -
