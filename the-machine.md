@@ -1159,4 +1159,21 @@ High addresses | Storage (uninitialized) variables    |
 - **Universal Serial Bus (USB)**
   - the **host controller stack** _multiplexes_ the data on USB
     - giving each peripheral a time slice of the bus
--
+
+## Mass Storage Devices and Filesystems
+
+### Disk Drives
+
+- **bit density**
+- Two most used hard-disk performance parameters:
+  - read/write head's average seek time
+  - track-to-track seek time
+- **blowing revs**
+- **sector interleaving**
+- **sequential file operations are usually much faster than random-access operations because sequential operations require fewer head seeks**
+- If you know a disk controller has an on-board cache, you can write file data in smaller blocks, doing other processing between the block operations, to give the hardware time to write data to the disk surface.
+- **RAID** - redundant array of inexpensive disk
+
+### Writing Software that Manipulates Data on Mass Storage Device
+
+- Binary I/O is usually _faster_ than formatted text I/O, because of the format of data written to disk
